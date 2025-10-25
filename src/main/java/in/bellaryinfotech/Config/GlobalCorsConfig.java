@@ -20,7 +20,8 @@ public class GlobalCorsConfig {
          config.setAllowedOriginPatterns(Arrays.asList(
              "http://localhost:5173",    
              "http://lre.bellaryinfotech.com",
-             "http://195.35.45.56:5170"
+             "http://195.35.45.56:5170",
+             "http://localrealestate.bellaryinfotech.com"
          ));
         return new WebMvcConfigurer() {
             @Override
