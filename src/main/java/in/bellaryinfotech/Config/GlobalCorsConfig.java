@@ -19,7 +19,7 @@ public class GlobalCorsConfig {
          // ✅ Allow all required frontend domains
          config.setAllowedOriginPatterns(Arrays.asList(
              "http://localhost:5173",    
-             "https://lre.bellaryinfotech.com"
+             "http://lre.bellaryinfotech.com"
          ));
         return new WebMvcConfigurer() {
             @Override
