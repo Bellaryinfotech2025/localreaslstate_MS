@@ -3,7 +3,7 @@ package in.bellaryinfotech.model;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "images")
+@Table(name = "local_real_estate")
 public class FileEntity {
 
     @Id
