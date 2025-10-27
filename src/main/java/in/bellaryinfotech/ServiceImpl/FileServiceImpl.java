@@ -4,14 +4,16 @@ import in.bellaryinfotech.model.FileEntity;
 import in.bellaryinfotech.Repository.FileRepository;
 import in.bellaryinfotech.Service.FileService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class FileServiceImpl implements FileService {
@@ -21,12 +23,13 @@ public class FileServiceImpl implements FileService {
     @Autowired
     private FileRepository fileRepository;
 
-    // ✅ Absolute paths for Windows
-    private static final String UPLOAD_DIR = "C:/bellary_uploads/";
-    private static final String IMAGE_DIR = UPLOAD_DIR + "images/";
-    private static final String VIDEO_DIR = UPLOAD_DIR + "videos/";
+    // ✅ Dynamic directory paths from application.properties
+    @Value("${file.upload.image-dir}")
+    private String IMAGE_DIR;
 
-    // ✅ Upload new file (Create)
+    @Value("${file.upload.video-dir}")
+    private String VIDEO_DIR;
+
     @Override
     public FileEntity uploadFile(MultipartFile imageFile, MultipartFile videoFile,
                                  String title, String location, String area, String areaInCents,
@@ -38,7 +41,7 @@ public class FileServiceImpl implements FileService {
             throw new Exception("At least one file (image or video) must be provided");
         }
 
-        // Create folders if they don't exist
+        // ✅ Ensure directories exist
         new File(IMAGE_DIR).mkdirs();
         new File(VIDEO_DIR).mkdirs();
 
@@ -47,19 +50,15 @@ public class FileServiceImpl implements FileService {
 
         if (imageFile != null && !imageFile.isEmpty()) {
             String imageFileName = System.currentTimeMillis() + "_" + imageFile.getOriginalFilename();
-            File dest = new File(IMAGE_DIR + imageFileName);
-            imageFile.transferTo(dest);
-
-            // URL to serve via controller
+            Path imagePath = Paths.get(IMAGE_DIR, imageFileName); // ✅ Safe for all OS
+            imageFile.transferTo(imagePath.toFile());
             imageUrl = "/api/files/view/image/" + imageFileName;
         }
 
         if (videoFile != null && !videoFile.isEmpty()) {
             String videoFileName = System.currentTimeMillis() + "_" + videoFile.getOriginalFilename();
-            File dest = new File(VIDEO_DIR + videoFileName);
-            videoFile.transferTo(dest);
-
-            // URL to serve via controller
+            Path videoPath = Paths.get(VIDEO_DIR, videoFileName);
+            videoFile.transferTo(videoPath.toFile());
             videoUrl = "/api/files/view/video/" + videoFileName;
         }
 
@@ -78,7 +77,6 @@ public class FileServiceImpl implements FileService {
         return saved;
     }
 
-    // ✅ Fetch all
     @Override
     public List<FileEntity> getAllFiles() {
         LOG.info("Fetching all uploaded files...");
@@ -87,33 +85,28 @@ public class FileServiceImpl implements FileService {
         return files;
     }
 
-    // ✅ Fetch by ID
     @Override
     public FileEntity getFileById(Long id) throws Exception {
         LOG.info("Fetching file with ID: {}", id);
-        Optional<FileEntity> fileOpt = fileRepository.findById(id);
-        if (fileOpt.isPresent()) return fileOpt.get();
-        else throw new Exception("File not found with ID: " + id);
+        return fileRepository.findById(id)
+                .orElseThrow(() -> new Exception("File not found with ID: " + id));
     }
 
-    // ✅ Update existing file
     @Override
     public FileEntity updateFile(Long id, MultipartFile imageFile, MultipartFile videoFile,
                                  String title, String location, String area, String areaInCents,
                                  String price, String features) throws Exception {
 
-        Optional<FileEntity> fileOpt = fileRepository.findById(id);
-        if (!fileOpt.isPresent()) throw new Exception("File not found for update with ID: " + id);
-
-        FileEntity existing = fileOpt.get();
+        FileEntity existing = fileRepository.findById(id)
+                .orElseThrow(() -> new Exception("File not found for update with ID: " + id));
 
         new File(IMAGE_DIR).mkdirs();
         new File(VIDEO_DIR).mkdirs();
 
         if (imageFile != null && !imageFile.isEmpty()) {
             String imageFileName = System.currentTimeMillis() + "_" + imageFile.getOriginalFilename();
-            File dest = new File(IMAGE_DIR + imageFileName);
-            imageFile.transferTo(dest);
+            Path imagePath = Paths.get(IMAGE_DIR, imageFileName);
+            imageFile.transferTo(imagePath.toFile());
             existing.setName(imageFile.getOriginalFilename());
             existing.setType(imageFile.getContentType());
             existing.setImageUrl("/api/files/view/image/" + imageFileName);
@@ -121,8 +114,8 @@ public class FileServiceImpl implements FileService {
 
         if (videoFile != null && !videoFile.isEmpty()) {
             String videoFileName = System.currentTimeMillis() + "_" + videoFile.getOriginalFilename();
-            File dest = new File(VIDEO_DIR + videoFileName);
-            videoFile.transferTo(dest);
+            Path videoPath = Paths.get(VIDEO_DIR, videoFileName);
+            videoFile.transferTo(videoPath.toFile());
             existing.setVideoName(videoFile.getOriginalFilename());
             existing.setVideoType(videoFile.getContentType());
             existing.setVideoUrl("/api/files/view/video/" + videoFileName);
@@ -135,21 +128,22 @@ public class FileServiceImpl implements FileService {
         existing.setPrice(price);
         existing.setFeatures(features);
 
-        return fileRepository.save(existing);
+        FileEntity updated = fileRepository.save(existing);
+        LOG.info("File updated successfully with ID: {}", updated.getId());
+        return updated;
     }
 
-    // ✅ Delete by ID
     @Override
     public void deleteFileById(Long id) throws Exception {
-        Optional<FileEntity> fileOpt = fileRepository.findById(id);
-        if (fileOpt.isPresent()) fileRepository.deleteById(id);
-        else throw new Exception("File not found with ID: " + id);
+        FileEntity file = fileRepository.findById(id)
+                .orElseThrow(() -> new Exception("File not found with ID: " + id));
+        fileRepository.delete(file);
+        LOG.info("File deleted with ID: {}", id);
     }
 
-    // ✅ Delete all files
     @Override
     public void deleteAllFiles() {
         fileRepository.deleteAll();
+        LOG.info("All files deleted successfully.");
     }
 }
-
