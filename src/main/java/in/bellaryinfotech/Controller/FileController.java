@@ -71,7 +71,7 @@ public class FileController {
 
         try {
             // Match the same absolute paths you used in FileServiceImpl
-            String baseDir = "C:/bellary_uploads/";
+            String baseDir = "/home/ubuntu/uploads/";
             String folder = type.equalsIgnoreCase("video")
                     ? baseDir + "videos/"
                     : baseDir + "images/";
@@ -147,4 +147,5 @@ public class FileController {
         return dto;
     }
 }
+
 
