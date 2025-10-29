@@ -19,7 +19,7 @@ public class GlobalCorsConfig {
          // ✅ Allow all required frontend domains
          config.setAllowedOriginPatterns(Arrays.asList(
               
-             "http://localrealestate.bellaryinfotech.com"
+             "https://lre.bellaryinfotech.com"
          ));
         return new WebMvcConfigurer() {
             @Override
