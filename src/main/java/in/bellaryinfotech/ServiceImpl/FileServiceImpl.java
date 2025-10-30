@@ -23,13 +23,18 @@ public class FileServiceImpl implements FileService {
     @Autowired
     private FileRepository fileRepository;
 
-    // ✅ Dynamic directory paths from application.properties
+    // ✅ Read from application.properties
     @Value("${file.upload.image-dir}")
     private String IMAGE_DIR;
 
     @Value("${file.upload.video-dir}")
     private String VIDEO_DIR;
 
+    // ✅ Base URL for image & video access (set in application.properties)
+    @Value("${app.base-url}")
+    private String BASE_URL;
+
+    // ✅ Upload new file (Create)
     @Override
     public FileEntity uploadFile(MultipartFile imageFile, MultipartFile videoFile,
                                  String title, String location, String area, String areaInCents,
@@ -50,16 +55,17 @@ public class FileServiceImpl implements FileService {
 
         if (imageFile != null && !imageFile.isEmpty()) {
             String imageFileName = System.currentTimeMillis() + "_" + imageFile.getOriginalFilename();
-            Path imagePath = Paths.get(IMAGE_DIR, imageFileName); // ✅ Safe for all OS
+            Path imagePath = Paths.get(IMAGE_DIR, imageFileName);
             imageFile.transferTo(imagePath.toFile());
-            imageUrl = "/api/files/view/image/" + imageFileName;
+            // ✅ Use BASE_URL for HTTPS-safe serving
+            imageUrl = BASE_URL + "/api/files/view/image/" + imageFileName;
         }
 
         if (videoFile != null && !videoFile.isEmpty()) {
             String videoFileName = System.currentTimeMillis() + "_" + videoFile.getOriginalFilename();
             Path videoPath = Paths.get(VIDEO_DIR, videoFileName);
             videoFile.transferTo(videoPath.toFile());
-            videoUrl = "/api/files/view/video/" + videoFileName;
+            videoUrl = BASE_URL + "/api/files/view/video/" + videoFileName;
         }
 
         FileEntity entity = new FileEntity(
@@ -109,7 +115,7 @@ public class FileServiceImpl implements FileService {
             imageFile.transferTo(imagePath.toFile());
             existing.setName(imageFile.getOriginalFilename());
             existing.setType(imageFile.getContentType());
-            existing.setImageUrl("/api/files/view/image/" + imageFileName);
+            existing.setImageUrl(BASE_URL + "/api/files/view/image/" + imageFileName);
         }
 
         if (videoFile != null && !videoFile.isEmpty()) {
@@ -118,7 +124,7 @@ public class FileServiceImpl implements FileService {
             videoFile.transferTo(videoPath.toFile());
             existing.setVideoName(videoFile.getOriginalFilename());
             existing.setVideoType(videoFile.getContentType());
-            existing.setVideoUrl("/api/files/view/video/" + videoFileName);
+            existing.setVideoUrl(BASE_URL + "/api/files/view/video/" + videoFileName);
         }
 
         existing.setTitle(title);
