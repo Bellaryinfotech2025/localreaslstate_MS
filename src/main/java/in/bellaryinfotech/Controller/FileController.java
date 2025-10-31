@@ -28,7 +28,7 @@ public class FileController {
     private FileService fileService;
 
     // ✅ File base directory (must match FileServiceImpl)
-    private static final String BASE_DIR = "C:/bellary_uploads/";
+    private static final String BASE_DIR = "uploads/";
     private static final String IMAGE_DIR = BASE_DIR + "images/";
     private static final String VIDEO_DIR = BASE_DIR + "videos/";
 
@@ -160,4 +160,5 @@ public class FileController {
         dto.setFeatures(file.getFeatures());
         return dto;
     }
+
 }
